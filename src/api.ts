@@ -1,9 +1,8 @@
 import axios from 'axios';
 
-// Configuración de la URL base del API
-const API_URL = import.meta.env.PROD
-  ? 'https://crm-multimarca-backend-production.up.railway.app/api'
-  : 'http://localhost:3001/api';
+// Configuración de la URL base del API — usa la variable de entorno,
+// NUNCA hardcodear el dominio de otro proyecto acá.
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // Crear instancia de axios
 export const api = axios.create({
