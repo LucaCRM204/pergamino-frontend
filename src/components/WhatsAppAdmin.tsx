@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import VideosVendedor from './VideosVendedor';
 
 interface WASession {
   supervisorId: number;
@@ -11,7 +10,6 @@ interface WASession {
   hasQR: boolean;
   botEnabled: boolean;
   botFuente: string;
-  botMarcas: string;
   gerenciaId?: number | null;
 }
 
@@ -21,13 +19,6 @@ interface Props {
   botApiUrl: string;
   title?: string;
 }
-
-const MARCAS = [
-  { key: 'vw', label: 'VW' },
-  { key: 'fiat', label: 'Fiat' },
-  { key: 'peugeot', label: 'Peugeot' },
-  { key: 'renault', label: 'Renault' },
-];
 
 const ROLE_BADGE: Record<string, { label: string; cls: string }> = {
   gerente:    { label: '🏢 Gerencia',   cls: 'bg-purple-100 text-purple-700' },
@@ -201,15 +192,6 @@ export default function WhatsAppAdmin({ botApiUrl, title = 'WhatsApp Admin' }: P
     }
   };
 
-  const toggleMarca = async (id: number, current: string, key: string) => {
-    const set = new Set(current ? current.split(',').filter(Boolean) : []);
-    if (set.has(key)) set.delete(key); else set.add(key);
-    await fetch(`${botApiUrl}/api/sessions/${id}/set-marcas`, {
-      method: 'POST', headers: hdrs(), body: JSON.stringify({ password: pw, marcas: Array.from(set) })
-    });
-    setTimeout(load, 400);
-  };
-
   const usuariosSinSesion = usuarios.filter(u => !sessions.some(s => s.supervisorId === u.id));
   const destinos = usuarios.filter(u => u.role === 'gerente' || u.role === 'supervisor');
   const grupos: [string, Usuario[]][] = [
@@ -280,13 +262,13 @@ export default function WhatsAppAdmin({ botApiUrl, title = 'WhatsApp Admin' }: P
             </select>
             <input
               type="text"
-              list="fuentes-goldplan"
+              list="fuentes-pergamino"
               value={selFuente}
               onChange={e => setSelFuente(e.target.value)}
               placeholder="Fuente (opcional, ej: Joaquin)"
               className="text-sm border border-gray-300 rounded-lg px-3 py-2.5 flex-1 min-w-[180px] max-w-xs"
             />
-            <datalist id="fuentes-goldplan">
+            <datalist id="fuentes-pergamino">
               {FUENTES_OPTIONS.filter(f => f).map(f => <option key={f} value={f} />)}
             </datalist>
             <button
@@ -440,29 +422,6 @@ export default function WhatsAppAdmin({ botApiUrl, title = 'WhatsApp Admin' }: P
                   </div>
                 )}
               </div>
-
-              {/* Marcas */}
-              <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg flex-wrap">
-                <span className="text-xs font-medium text-gray-600 whitespace-nowrap">🚗 Marcas que ofrece:</span>
-                {MARCAS.map(m => {
-                  const activas = s.botMarcas ? s.botMarcas.split(',').filter(Boolean) : [];
-                  const checked = activas.includes(m.key);
-                  return (
-                    <label key={m.key} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleMarca(s.supervisorId, s.botMarcas, m.key)}
-                        className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                      />
-                      {m.label}
-                    </label>
-                  );
-                })}
-                {!s.botMarcas && (
-                  <span className="text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded">Sin tildar = ofrece TODAS</span>
-                )}
-              </div>
             </div>
           )}
 
@@ -488,14 +447,6 @@ export default function WhatsAppAdmin({ botApiUrl, title = 'WhatsApp Admin' }: P
             </button>
           </div>
 
-          {/* Videos por modelo — el bot manda el video del modelo que consulta el lead */}
-          <VideosVendedor
-            botApiUrl={botApiUrl}
-            sessionId={s.supervisorId}
-            connected={s.status === 'connected'}
-            pw={pw}
-          />
-
           {qrs[s.supervisorId] && (
             <div className="text-center p-4 bg-gray-50 rounded-lg mt-3">
               <p className="text-sm text-gray-600 mb-3">Escaneá con el celular de {s.supervisorName}</p>
@@ -516,7 +467,7 @@ export default function WhatsAppAdmin({ botApiUrl, title = 'WhatsApp Admin' }: P
       <div className="bg-gray-50 rounded-lg p-4 text-xs text-gray-500 space-y-1">
         <p>• <strong>De quién es el número:</strong> vendedor → sus leads entran directo a él · supervisor/gerencia → round-robin en su equipo</p>
         <p>• <strong>Respuestas desde el CRM:</strong> salen por el número del vendedor asignado; si no tiene, por el de su supervisor; si no, el de la gerencia</p>
-        <p>• <strong>Bot ON:</strong> la IA responde sola y solo ofrece las marcas tildadas · <strong>Bot OFF:</strong> chat manual desde el CRM</p>
+        <p>• <strong>Bot ON:</strong> la IA (Valentina) responde sola, pide nombre + modelo + mail y deriva a un asesor · <strong>Bot OFF:</strong> chat manual desde el CRM</p>
         <p>• <strong>Cerrar:</strong> desvincula WhatsApp por completo, hay que escanear QR de nuevo</p>
       </div>
     </div>

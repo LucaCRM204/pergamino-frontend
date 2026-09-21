@@ -153,7 +153,7 @@ const marcas = {
 
 // URL base del servidor del bot de WhatsApp (Baileys) de Alluma Pergamino.
 // Completar con la URL real una vez desplegado (ej: "https://api.crmalluma.com.ar/wa-pergamino").
-const WHATSAPP_BOT_URL = "";
+const WHATSAPP_BOT_URL = "https://api.crmalluma.com.ar/wa-pergamino";
 
 
 type LeadRow = {
@@ -6227,7 +6227,7 @@ const getProgresoMes = (vendedor_id: number) => {
   <div className="space-y-6">
     <WhatsAppAdmin
       botApiUrl={WHATSAPP_BOT_URL}
-      title="WhatsApp Admin — GoldPlan"
+      title="WhatsApp Admin — Pergamino"
     />
   </div>
 )}
