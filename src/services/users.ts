@@ -7,6 +7,7 @@ export type User = {
   role: string;
   reportsTo: number | null;
   active: number | boolean;
+  recibe_leads?: number | boolean; // 0 = pausado: entra al CRM pero no recibe leads automáticos
 };
 
 export const listUsers = async (): Promise<User[]> => {

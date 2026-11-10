@@ -1653,12 +1653,15 @@ const handleAsignarTareaAVendedor = () => {
   // ===== Round-robin con soporte para bots específicos =====
   const [rrIndex, setRrIndex] = useState(0);
 
+  // Vendedor pausado (recibe_leads = 0): entra al CRM pero no entra en repartos automáticos
+  const recibeLeads = (u: any) => Number(u?.recibe_leads ?? 1) === 1;
+
   const getActiveVendorIdsInScope = (scopeUser?: any) => {
     if (!scopeUser) return [] as number[];
     const scope = getAccessibleUserIds(scopeUser);
     return users
       .filter(
-        (u: any) => u.role === "vendedor" && u.active && scope.includes(u.id)
+        (u: any) => u.role === "vendedor" && u.active && recibeLeads(u) && scope.includes(u.id)
       )
       .map((u: any) => u.id);
   };
@@ -1683,7 +1686,7 @@ const handleAsignarTareaAVendedor = () => {
     return users
       .filter(
         (u: any) =>
-          u.role === "vendedor" && u.active && descendants.includes(u.id)
+          u.role === "vendedor" && u.active && recibeLeads(u) && descendants.includes(u.id)
       )
       .map((u: any) => u.id);
   };
@@ -6165,10 +6168,43 @@ const getProgresoMes = (vendedor_id: number) => {
                                     {user.active ? "Desactivar" : "Activar"}
                                   </button>
                                 )}
+                                {user.role === "vendedor" && user.active && (
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        const updated = await apiUpdateUser(user.id, {
+                                          recibe_leads: recibeLeads(user) ? 0 : 1,
+                                        });
+                                        setUsers((prev) =>
+                                          prev.map((u: any) => (u.id === user.id ? { ...u, ...updated } : u))
+                                        );
+                                      } catch (e) {
+                                        console.error("No pude cambiar la recepción de leads", e);
+                                      }
+                                    }}
+                                    className={`px-2 py-1 text-xs rounded ${
+                                      recibeLeads(user)
+                                        ? "bg-amber-100 text-amber-800 hover:bg-amber-200"
+                                        : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                    }`}
+                                    title={
+                                      recibeLeads(user)
+                                        ? "Deja de recibir leads automáticos, pero puede seguir entrando al CRM"
+                                        : "Vuelve a recibir leads automáticos"
+                                    }
+                                  >
+                                    {recibeLeads(user) ? "⏸️ Pausar leads" : "▶️ Reactivar leads"}
+                                  </button>
+                                )}
                               </div>
                               {user.role === "vendedor" && !user.active && (
                                 <div className="text-xs text-orange-600 mt-1">
                                   No recibe leads nuevos
+                                </div>
+                              )}
+                              {user.role === "vendedor" && user.active && !recibeLeads(user) && (
+                                <div className="text-xs text-amber-700 mt-1">
+                                  ⏸️ Leads pausados · puede entrar al CRM
                                 </div>
                               )}
                             </td>
